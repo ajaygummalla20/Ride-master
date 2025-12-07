@@ -1,0 +1,115 @@
+<div class="find-ride-container">
+    <div class="page-header">
+        <button class="back-btn" (click)="goBack()">← Back</button>
+        <h2>Available Rides</h2>
+        <p>Find and book rides that match your schedule</p>
+    </div>
+
+    <div class="rides-container">
+        <div *ngIf="isLoading" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading available rides...</p>
+        </div>
+
+        <div *ngIf="!isLoading && availableRides.length === 0" class="no-rides">
+            <div class="no-rides-icon">🚫</div>
+            <h3>No Rides Available</h3>
+            <p>There are currently no rides available. Check back later or offer your own ride!</p>
+            <button class="btn btn-primary" (click)="goBack()">Go Back</button>
+        </div>
+
+        <div *ngIf="!isLoading && availableRides.length > 0" class="rides-list">
+            <div class="rides-header">
+                <h3>{{ availableRides.length }} Ride{{ availableRides.length !== 1 ? 's' : '' }} Available</h3>
+                <div class="header-buttons">
+                    <button class="refresh-btn" (click)="loadRides()">🔄 Refresh</button>
+                    <button class="refresh-btn" (click)="clearAllRides()"
+                        style="background: rgba(255, 107, 107, 0.2);">🗑️ Clear All</button>
+                </div>
+            </div>
+
+            <div class="ride-card" *ngFor="let ride of availableRides">
+                <div class="ride-header">
+                    <div class="vehicle-info">
+                        <span class="vehicle-icon">{{ getVehicleIcon(ride.vehicleType) }}</span>
+                        <span class="vehicle-type">{{ ride.vehicleType | titlecase }}</span>
+                        <span class="vehicle-number">{{ ride.vehicleNo }}</span>
+                    </div>
+                    <div class="ride-time">
+                        {{ formatDateTime(ride.time) }}
+                    </div>
+                </div>
+
+                <div class="route-info">
+                    <div class="route-point pickup">
+                        <span class="route-icon">📍</span>
+                        <div class="point-details">
+                            <span class="point-label">Pickup</span>
+                            <span class="point-location">{{ ride.pickupPoint }}</span>
+                        </div>
+                    </div>
+
+                    <div class="route-arrow">→</div>
+
+                    <div class="route-point destination">
+                        <span class="route-icon">🎯</span>
+                        <div class="point-details">
+                            <span class="point-label">Destination</span>
+                            <span class="point-location">{{ ride.destination }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ride-footer">
+                    <div class="ride-details">
+                        <span class="driver-id">
+                            <span class="detail-label">Driver:</span>
+                            {{ ride.employeeId }}
+                        </span>
+                        <span class="vacant-seats" [class.no-seats]="ride.vacantSeats === 0">
+                            <span class="detail-label">Available Seats:</span>
+                            {{ ride.vacantSeats }}
+                        </span>
+                        <span *ngIf="ride.bookedBy && ride.bookedBy.length > 0" class="booked-count">
+                            <span class="detail-label">Booked by:</span>
+                            {{ ride.bookedBy.length }} passenger{{ ride.bookedBy.length !== 1 ? 's' : '' }}
+                        </span>
+                    </div>
+
+                    <button class="btn btn-book" [class.btn-disabled]="!canBookRide(ride)"
+                        [disabled]="!canBookRide(ride)" (click)="openBookingModal(ride)">
+                        {{ isRideBooked(ride) ? 'Fully Booked' : 'Book Ride' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal-overlay" *ngIf="bookingRideId" (click)="closeBookingModal()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Book This Ride</h3>
+                <button class="close-btn" (click)="closeBookingModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form class="booking-form" (ngSubmit)="confirmBooking()" #bookingForm="ngForm">
+                    <label for="employeeId">Your Employee ID *</label>
+                    <input type="text" id="employeeId" name="employeeId" [(ngModel)]="bookingEmployeeId"
+                        (input)="onEmployeeIdChange()" placeholder="Enter your Employee ID" class="modal-input"
+                        [class.error]="bookingError" required #employeeIdInput="ngModel">
+
+                    <div class="error-message" *ngIf="bookingError">
+                        {{ bookingError }}
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeBookingModal()">Cancel</button>
+                <button class="btn btn-primary" (click)="confirmBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+</div>
